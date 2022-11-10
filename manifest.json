@@ -1,0 +1,15 @@
+{
+    "name": "Gestão BH",
+    "version": "0.1",
+    "manifest_version": 3,
+    "description": "Utilitário para calcular Banco de Horas acumulados no Ponto Certificado Stefanini.",
+    "icons": {
+        "128": "128.png"
+    },
+    "content_scripts": [
+        {
+          "matches": ["https://web.pontocertificado.com.br/admin/RelatorioTrabalhador"],
+          "js": ["script.js"]
+        }
+    ]
+}
