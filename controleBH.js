@@ -18,6 +18,12 @@ let minutosEmHorasTexto = (valorEmMinutos) => {
     return horas + ":" + minutos;
 }
 
+let totalDeHorasRealizadas = () => {
+    let bottomRelatorio = document.getElementById("bottomRelatorio");
+
+    return bottomRelatorio ? bottomRelatorio.querySelectorAll("div i")[1] : null;
+}
+
 let exibirAvaliacaoBancoDeHoras = (texto) => {
     let element = document.createElement("i");
     element.classList.add("estadoBancoDeHoras");
@@ -70,16 +76,108 @@ let totalHorasDevidas = (totalDeDias, diasNaoRegistrados) => {
     return (totalDeDias - diasNaoRegistrados) *  8;
 }
 
+let salvarPonto = () => {
+    if (document.getElementsByClassName("entrada").length == 0) transformarTabela();
+
+    let totais = document.querySelectorAll(".total");
+    let totalMensal = 0;
+    
+    for (let total of totais) {
+        let tr = total.parentNode;
+        
+        let entrada = tr.querySelector(".entrada input").value;
+        let inicioAlmoco = tr.querySelector(".inicioAlmoco input").value;
+        let fimAlmoco = tr.querySelector(".fimAlmoco input").value;
+        let saida = tr.querySelector(".saida input").value;
+        
+        if (entrada.includes(":") && inicioAlmoco.includes(":") && fimAlmoco.includes(":") && saida.includes(":")) {
+            let totalDiario = totalizarHorasDia(entrada, inicioAlmoco, fimAlmoco, saida);
+            totalMensal += totalDiario;
+            
+            total.querySelector("input").value = minutosEmHorasTexto(totalDiario);
+        }
+    }
+    
+    if (totalDeHorasRealizadas()) {
+        totalDeHorasRealizadas().innerText = minutosEmHorasTexto(totalMensal);
+        
+        let totaisDiarios = document.querySelectorAll('.total input');
+        avaliarBancoDeHoras(totalHorasDevidas(totaisDiarios.length, contarDiasNaoRegistrados(totaisDiarios)) + ":00", minutosEmHorasTexto(totalMensal));
+    }
+    else {
+        messageAlert();
+    }
+}
+
+let getCpfUsuario = () => {
+    return document.querySelectorAll(".profile-pic span")[0].innerText;
+}
+
+let buildPonto = tr => {
+    let data = tr.querySelector(".data").innerText;
+    let entrada = tr.querySelector(".entrada input").value;
+    let inicioAlmoco = tr.querySelector(".inicioAlmoco input").value;
+    let fimAlmoco = tr.querySelector(".fimAlmoco input").value;
+    let saida = tr.querySelector(".saida input").value;
+
+    return {
+        "data": data,
+        "entrada" : entrada,
+        "inicioAlmoco" : inicioAlmoco,
+        "fimAlmoco" : fimAlmoco,
+        "saida" : saida
+    };
+}
+
+let carregarPonto = (tr, pontoSalvo) => {
+    tr.querySelector(".data").innerText = pontoSalvo.data;
+    tr.querySelector(".entrada input").value = pontoSalvo.entrada;
+    tr.querySelector(".inicioAlmoco input").value = pontoSalvo.inicioAlmoco;
+    tr.querySelector(".fimAlmoco input").value = pontoSalvo.fimAlmoco;
+    tr.querySelector(".saida input").value = pontoSalvo.saida;
+}
+
+let inserirButtonSalvar = (parentElement) => {
+    let buttonSalvar = document.createElement("button");
+    buttonSalvar.innerText = "Salvar";
+    buttonSalvar.classList.add("salvar", "btn","btnPCSStyle", "mr-1");
+    buttonSalvar.style = "padding: 0.5em;border-color: darkgray;border-radius: 50%;font-weight: normal;font-size: 0.65rem;background-color: darkgreen;";
+
+    parentElement.appendChild(buttonSalvar);
+    
+    buttonSalvar.addEventListener("click", () => {
+        let ponto = buildPonto(parentElement.parentNode);
+
+        let key = getCpfUsuario() + ponto.data;
+
+        localStorage.setItem(key, JSON.stringify(ponto));
+
+        calcularBancoDeHoras();
+    });
+}
+
+let carregarPontosSalvos = () => {
+    let datasTD = document.querySelectorAll(".data");
+
+    datasTD.forEach(dataTD => {
+        let pontoSalvo = JSON.parse(localStorage.getItem(getCpfUsuario() + dataTD.innerText));
+
+        if (pontoSalvo) {
+            carregarPonto(dataTD.parentNode, pontoSalvo);
+        }
+    });
+}
+
 let transformarTabela = () => {
     let celulasDaTabela = document.querySelectorAll(".AtenaMvcGrid tbody td");
     
     for (let index = 0; index < celulasDaTabela.length; index++) {
         let celula = celulasDaTabela[index];
+        if (index%7 == 0) celula.classList.add("data");
         if (index%7 == 2) celula.classList.add("entrada");
         if (index%7 == 3) celula.classList.add("inicioAlmoco");
         if (index%7 == 4) celula.classList.add("fimAlmoco");
         if (index%7 == 5) celula.classList.add("saida");
-        if (index%7 == 6) celula.classList.add("total");
         
         if (index%7 > 1) {
             let valor = celula.innerText;
@@ -88,13 +186,15 @@ let transformarTabela = () => {
             celula.querySelectorAll("input")[0].value = valor;
             celula.querySelectorAll("input")[0].style = "width: inherit; border-style: none; background-color: transparent;";
         }
+
+        if (index%7 == 6) {
+            celula.classList.add("total");
+
+            inserirButtonSalvar(celula);
+        }
     }
-}
 
-let totalDeHorasRealizadas = () => {
-    let bottomRelatorio = document.getElementById("bottomRelatorio");
-
-    return bottomRelatorio ? bottomRelatorio.querySelectorAll("div i")[1] : null;
+    carregarPontosSalvos();
 }
 
 let calcularBancoDeHoras = () => {
