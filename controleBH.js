@@ -138,10 +138,9 @@ let carregarPonto = (tr, pontoSalvo) => {
 }
 
 let inserirButtonSalvar = (parentElement) => {
-    let buttonSalvar = document.createElement("button");
-    buttonSalvar.innerText = "Salvar";
-    buttonSalvar.classList.add("salvar", "btn","btnPCSStyle", "mr-1");
-    buttonSalvar.style = "padding: 0.5em;border-color: darkgray;border-radius: 50%;font-weight: normal;font-size: 0.65rem;background-color: darkgreen;";
+    let buttonSalvar = document.createElement("i");
+    buttonSalvar.classList.add("salvar", "fa", "fa-save", 'mr-1');
+    buttonSalvar.style = "cursor: pointer";
 
     parentElement.appendChild(buttonSalvar);
     
@@ -152,7 +151,27 @@ let inserirButtonSalvar = (parentElement) => {
 
         localStorage.setItem(key, JSON.stringify(ponto));
 
+        inserirButtonExcluir(parentElement);
+
         calcularBancoDeHoras();
+    });
+}
+
+let inserirButtonExcluir = (parentElement) => {
+    let buttonExcluir = document.createElement("i");
+    buttonExcluir.classList.add("excluir", "fa", "fa-trash");
+    buttonExcluir.style = "cursor: pointer; padding: 0 3";
+
+    parentElement.appendChild(buttonExcluir);
+    
+    buttonExcluir.addEventListener("click", () => {
+        let ponto = buildPonto(parentElement.parentNode);
+
+        let key = getCpfUsuario() + ponto.data;
+
+        localStorage.removeItem(key);
+
+        parentElement.removeChild(buttonExcluir);
     });
 }
 
@@ -160,10 +179,13 @@ let carregarPontosSalvos = () => {
     let datasTD = document.querySelectorAll(".data");
 
     datasTD.forEach(dataTD => {
-        let pontoSalvo = JSON.parse(localStorage.getItem(getCpfUsuario() + dataTD.innerText));
+        let key = getCpfUsuario() + dataTD.innerText;
+        let pontoSalvo = JSON.parse(localStorage.getItem(key));
 
         if (pontoSalvo) {
             carregarPonto(dataTD.parentNode, pontoSalvo);
+
+            inserirButtonExcluir(dataTD.parentNode.querySelector(".total"));
         }
     });
 }
