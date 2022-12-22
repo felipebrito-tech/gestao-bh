@@ -8,7 +8,7 @@
     },
     "content_scripts": [
         {
-          "matches": ["https://web.pontocertificado.com.br/admin/RelatorioTrabalhador"],
+          "matches": ["https://web.pontocertificado.com.br/admin/RelatorioTrabalhador", "https://web.pontocertificado.com.br/Admin/RelatorioTrabalhador"],
           "js": ["script.js"],
           "css": ["fontawesome-all.css"]
         }
